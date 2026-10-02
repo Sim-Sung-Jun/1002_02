@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오픈마켓 성과 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f5f6f8;--panel:#ffffff;--ink:#1c2230;--sub:#5b6474;--mute:#8a92a1;--line:#e3e6ec;--line2:#cfd4dd;--acc:#2a5bd7;--accbg:#e8eefc;--neg:#c93838;--zebra:#f8f9fb;
+--y0:#2a78d6;--y1:#eb6834;--y2:#1baf7a;--y3:#e3a008;--grid:#eceef2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13161c;--panel:#1b1f27;--ink:#e8ebf1;--sub:#aab2c0;--mute:#7c8595;--line:#2a303b;--line2:#3a4150;--acc:#7aa2ff;--accbg:#1f2a44;--neg:#ff7b7b;--zebra:#1f242d;--y0:#4c93ea;--y1:#f07a4a;--y2:#2bc08b;--y3:#f0b429;--grid:#262b35}}
+:root[data-theme="dark"]{--bg:#13161c;--panel:#1b1f27;--ink:#e8ebf1;--sub:#aab2c0;--mute:#7c8595;--line:#2a303b;--line2:#3a4150;--acc:#7aa2ff;--accbg:#1f2a44;--neg:#ff7b7b;--zebra:#1f242d;--y0:#4c93ea;--y1:#f07a4a;--y2:#2bc08b;--y3:#f0b429;--grid:#262b35}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;font-size:15px;line-height:1.55;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
+header h1{font-size:26px;font-weight:600;margin:0 0 4px;letter-spacing:-0.01em}
+header p{margin:0;color:var(--sub);font-size:14px}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:16px 0 14px;margin:8px 0 6px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.group{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:14px;padding:6px 13px;border:1px solid var(--line2);background:var(--panel);color:var(--sub);border-radius:999px;cursor:pointer}
+.chip:hover{color:var(--ink);border-color:var(--mute)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{font:inherit;font-size:14px;padding:7px 14px;border:0;background:transparent;color:var(--sub);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button[aria-pressed="true"]{background:var(--accbg);color:var(--acc);font-weight:500}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--sub);margin:12px 0 18px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.yr{font:inherit;font-size:13px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line2);border-radius:999px;background:var(--panel);color:var(--ink);cursor:pointer}
+.yr:hover{border-color:var(--mute)}
+.yr[aria-pressed="false"]{color:var(--mute);border-style:dashed;background:transparent}
+.yr[aria-pressed="false"] svg{opacity:.25}
+.lghint{font-size:12.5px;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,500px),1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 18px 10px;min-width:0}
+.card h2{font-size:16px;font-weight:600;margin:0}
+.card .hint{font-size:12.5px;color:var(--mute);margin:2px 0 12px}
+.chart{position:relative;height:240px}
+.tog{font:inherit;font-size:13.5px;display:flex;align-items:center;gap:6px;width:100%;margin-top:10px;padding:10px 2px;border:0;border-top:1px solid var(--line);background:none;color:var(--acc);cursor:pointer;text-align:left}
+.tog .ar{display:inline-block;transition:transform .15s}
+.tog[aria-expanded="true"] .ar{transform:rotate(90deg)}
+.tbl{overflow-x:auto;margin:0 0 8px}
+.tbl[hidden]{display:none}
+table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}
+th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;color:var(--sub)}
+thead th{font-weight:500;color:var(--sub);border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--panel)}
+tbody tr:nth-child(even){background:var(--zebra)}
+tfoot td{font-weight:600;border-top:1px solid var(--line2);border-bottom:0}
+td.neg{color:var(--neg)}
+td.na{color:var(--mute)}
+.note{margin-top:26px;font-size:13px;color:var(--sub);line-height:1.7}
+.note b{color:var(--ink);font-weight:500}
+@media (prefers-reduced-motion:reduce){.tog .ar{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>오픈마켓 성과 대시보드</h1>
+<p>2023년 1월 ~ 2026년 9월 · 쿠팡, 네이버, 토스, 카카오쇼핑, 지마켓, 테무</p>
+</header>
+<div class="controls">
+<div class="group" id="chs" role="group" aria-label="채널 선택"></div>
+<div class="seg" id="views" role="group" aria-label="보기 방식">
+<button data-v="m" aria-pressed="true">월별</button><button data-v="q" aria-pressed="false">분기별</button><button data-v="y" aria-pressed="false">연도별</button>
+</div>
+</div>
+<div class="legend" id="legend"></div>
+<div class="grid" id="grid"></div>
+<div class="note">
+<b>순이익</b>은 쿠팡의 경우 실제 순이익이 있는 달(2026년~)은 실제값, 그 전은 추정값을 썼고, 다른 채널은 추정 순이익이에요.<br>
+<b>순이익률·광고비 비율</b>은 월별 비율의 평균이 아니라 기간 합계 금액으로 다시 계산했어요.<br>
+<b>매출 ROAS</b>를 '전체'로 볼 때는 광고비가 없는 카카오쇼핑·테무 매출을 빼고, 광고를 집행한 채널 매출만 광고비로 나눴어요.<br>
+<b>2026년</b>은 9월까지의 데이터예요.
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const D={"쿠팡":[["2023-01",0,0,0],["2023-02",0,0,0],["2023-03",0,0,0],["2023-04",0,0,0],["2023-05",0,0,0],["2023-06",0,0,0],["2023-07",0,0,0],["2023-08",0,0,0],["2023-09",0,0,0],["2023-10",0,0,0],["2023-11",0,0,0],["2023-12",0,0,0],["2024-01",0,0,0],["2024-02",0,0,0],["2024-03",0,0,0],["2024-04",0,0,0],["2024-05",0,0,0],["2024-06",0,0,0],["2024-07",3348380,0,132827],["2024-08",27435150,0,1088325],["2024-09",87951570,0,3488950],["2024-10",85570230,3670246,3394485],["2024-11",72946810,5695934,2893727],["2024-12",55373410,4799202,2196607],["2025-01",92658840,4559863,3675683],["2025-02",65064640,7128856,2581049],["2025-03",131574460,34909003,5219426],["2025-04",135340900,24771736,5368837],["2025-05",83761150,9264811,3322721],["2025-06",104056930,10595554,4127834],["2025-07",206624360,29091745,8196580],["2025-08",338620350,43640830,13432729],["2025-09",499768540,64079708,19825315],["2025-10",305025870,23369377,12100069],["2025-11",216351060,29289592,8582429],["2025-12",314117610,23496229,12460730],["2026-01",343888970,50822859,13920546],["2026-02",488969990,49332314,12361505],["2026-03",327661730,30250472,26905578],["2026-04",211597090,30880459,11826432],["2026-05",219318020,41288055,-144938],["2026-06",227543940,27985158,8761312],["2026-07",194363920,44688517,9042912],["2026-08",308272740,63904787,10823065],["2026-09",429644860,59109465,15643354]],"네이버":[["2023-01",0,0,0],["2023-02",0,0,0],["2023-03",0,0,0],["2023-04",0,0,0],["2023-05",0,0,0],["2023-06",0,0,0],["2023-07",0,0,0],["2023-08",0,0,0],["2023-09",0,0,0],["2023-10",0,0,0],["2023-11",0,0,0],["2023-12",0,0,0],["2024-01",0,244579,-244579],["2024-02",0,0,0],["2024-03",0,0,0],["2024-04",12900,0,3019],["2024-05",1006400,0,235498],["2024-06",969500,0,226863],["2024-07",443500,747238,-643459],["2024-08",421500,116986,-18355],["2024-09",952800,185614,37341],["2024-10",24393000,677733,5030229],["2024-11",15622400,504259,3151383],["2024-12",18189200,32622,4223651],["2025-01",27302500,0,6388785],["2025-02",19807000,0,4634838],["2025-03",25767400,556694,5472878],["2025-04",38077700,1478579,7431603],["2025-05",39414500,5734349,3488644],["2025-06",67967300,4274152,11630196],["2025-07",85701700,5756834,14297364],["2025-08",71148900,5425509,11223334],["2025-09",118223100,10703463,16960742],["2025-10",86415000,7420873,12800237],["2025-11",108142300,23946254,1359044],["2025-12",120995600,9836511,18476459],["2026-01",137797861,12802682,19442017],["2026-02",125154700,9926147,19360053],["2026-03",99164500,12477460,10727033],["2026-04",101623300,12703138,11076714],["2026-05",87517000,18337601,2141377],["2026-06",79865100,8019710,10668723],["2026-07",66284300,7107960,8402566],["2026-08",62868900,5726355,8984968],["2026-09",48453600,5013086,6325056]],"토스":[["2023-01",0,0,0],["2023-02",0,0,0],["2023-03",0,0,0],["2023-04",0,0,0],["2023-05",0,0,0],["2023-06",0,0,0],["2023-07",0,0,0],["2023-08",0,0,0],["2023-09",0,0,0],["2023-10",0,0,0],["2023-11",7295000,0,364750],["2023-12",3989500,0,199475],["2024-01",2156700,0,107835],["2024-02",755600,0,37780],["2024-03",493700,0,24685],["2024-04",584600,0,29230],["2024-05",339700,0,16985],["2024-06",505100,0,25255],["2024-07",730600,0,36530],["2024-08",563900,0,28195],["2024-09",357800,0,17890],["2024-10",0,0,0],["2024-11",0,0,0],["2024-12",0,0,0],["2025-01",0,0,0],["2025-02",0,0,0],["2025-03",0,0,0],["2025-04",0,0,0],["2025-05",0,0,0],["2025-06",0,0,0],["2025-07",0,0,0],["2025-08",0,0,0],["2025-09",0,0,0],["2025-10",0,0,0],["2025-11",0,0,0],["2025-12",0,0,0],["2026-01",21792022,4067576,1089601],["2026-02",43564903,6646178,2178245],["2026-03",68902678,7332478,3445134],["2026-04",41995794,8485275,2099790],["2026-05",26404297,4969339,1320215],["2026-06",31803226,5917881,1590161],["2026-07",68939547,12830465,3446977],["2026-08",128587440,28610973,6429372],["2026-09",182843530,23604136,9142176]],"카카오쇼핑":[["2023-01",12208900,0,1220890],["2023-02",9206300,0,920630],["2023-03",9479100,0,947910],["2023-04",7217800,0,721780],["2023-05",8728600,0,872860],["2023-06",9375800,0,937580],["2023-07",11963900,0,1196390],["2023-08",8700500,0,870050],["2023-09",12449500,0,1244950],["2023-10",11421100,0,1142110],["2023-11",337400,0,33740],["2023-12",147100,0,14710],["2024-01",356300,0,35630],["2024-02",104500,0,10450],["2024-03",263900,0,26390],["2024-04",21800,0,2180],["2024-05",807100,0,80710],["2024-06",415900,0,41590],["2024-07",672000,0,67200],["2024-08",352300,0,35230],["2024-09",724000,0,72400],["2024-10",1027400,0,102740],["2024-11",1736200,0,173620],["2024-12",785900,0,78590],["2025-01",1565700,0,156570],["2025-02",1156800,0,115680],["2025-03",942200,0,94220],["2025-04",874200,0,87420],["2025-05",13423200,0,1342320],["2025-06",38638000,0,3863800],["2025-07",28663800,0,2866380],["2025-08",20701600,0,2070160],["2025-09",14545700,0,1454570],["2025-10",6240100,0,624010],["2025-11",2328000,0,232800],["2025-12",207700,0,20770],["2026-01",205300,0,20530],["2026-02",3856000,0,385600],["2026-03",3903400,0,390340],["2026-04",3340100,0,334010],["2026-05",2456600,0,245660],["2026-06",1638800,0,163880],["2026-07",6272100,0,627210],["2026-08",32691900,0,3269190],["2026-09",93904300,0,9390430]],"지마켓":[["2023-01",0,0,0],["2023-02",0,0,0],["2023-03",0,0,0],["2023-04",0,0,0],["2023-05",0,0,0],["2023-06",0,0,0],["2023-07",0,0,0],["2023-08",0,0,0],["2023-09",0,0,0],["2023-10",0,0,0],["2023-11",0,0,0],["2023-12",0,0,0],["2024-01",0,0,0],["2024-02",0,0,0],["2024-03",0,0,0],["2024-04",0,0,0],["2024-05",0,0,0],["2024-06",0,0,0],["2024-07",0,0,0],["2024-08",0,0,0],["2024-09",576162,0,28808],["2024-10",17723310,0,886166],["2024-11",48058090,0,2402904],["2024-12",16313640,0,815682],["2025-01",17573900,0,878695],["2025-02",153600990,0,7680050],["2025-03",65166510,3035938,3258326],["2025-04",45810590,890980,2290530],["2025-05",12667740,604390,633387],["2025-06",49486130,472331,2474306],["2025-07",11628270,675000,581414],["2025-08",1007550,0,50378],["2025-09",11331030,627440,566552],["2025-10",1720820,0,86041],["2025-11",6942800,0,347140],["2025-12",1685941,880780,84297],["2026-01",23110,0,1156],["2026-02",0,0,0],["2026-03",1174040,0,58702],["2026-04",0,0,0],["2026-05",0,0,0],["2026-06",0,0,0],["2026-07",0,1318020,0],["2026-08",4973580,330000,248679],["2026-09",12084240,4202,604212]],"테무":[["2023-01",0,0,0],["2023-02",0,0,0],["2023-03",0,0,0],["2023-04",0,0,0],["2023-05",0,0,0],["2023-06",0,0,0],["2023-07",0,0,0],["2023-08",0,0,0],["2023-09",0,0,0],["2023-10",0,0,0],["2023-11",0,0,0],["2023-12",0,0,0],["2024-01",0,0,0],["2024-02",0,0,0],["2024-03",0,0,0],["2024-04",0,0,0],["2024-05",0,0,0],["2024-06",0,0,0],["2024-07",0,0,0],["2024-08",0,0,0],["2024-09",0,0,0],["2024-10",0,0,0],["2024-11",0,0,0],["2024-12",0,0,0],["2025-01",0,0,0],["2025-02",0,0,0],["2025-03",0,0,0],["2025-04",0,0,0],["2025-05",0,0,0],["2025-06",0,0,0],["2025-07",0,0,0],["2025-08",0,0,0],["2025-09",0,0,0],["2025-10",0,0,0],["2025-11",0,0,0],["2025-12",0,0,0],["2026-01",0,0,0],["2026-02",0,0,0],["2026-03",0,0,0],["2026-04",133540,0,13354],["2026-05",15515568,0,1551557],["2026-06",39179080,0,3917908],["2026-07",45015140,0,4501514],["2026-08",47285401,0,4728540],["2026-09",30638164,0,3063816]]};
+const CHS=['전체','쿠팡','네이버','토스','카카오쇼핑','지마켓','테무'];
+const ADCH=['쿠팡','네이버','토스','지마켓'];
+const YEARS=['2023','2024','2025','2026'];
+const DASH=[[2,3],[6,4],[10,3,2,3],[]];
+const MET=[
+{k:'s',t:'매출액',h:'원'},
+{k:'p',t:'순이익',h:'원'},
+{k:'a',t:'광고비',h:'원'},
+{k:'pr',t:'순이익률',h:'순이익 ÷ 매출'},
+{k:'ar',t:'광고비 비율',h:'광고비 ÷ 매출'},
+{k:'roas',t:'매출 ROAS',h:'광고 집행 채널 매출 ÷ 광고비'}];
+let view='m',ch='전체',charts=[],open=new Set(),sel=new Set(YEARS);
+const SY=()=>YEARS.filter(y=>sel.has(y));
+const ci=y=>YEARS.indexOf(y);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const yc=()=>[css('--y0'),css('--y1'),css('--y2'),css('--y3')];
+
+function monthly(){const m={};const list=ch==='전체'?Object.keys(D):[ch];
+list.forEach(c=>D[c].forEach(r=>{const k=r[0];m[k]=m[k]||{s:0,a:0,p:0,sa:0};m[k].s+=r[1];m[k].a+=r[2];m[k].p+=r[3];if(ch!=='전체'||ADCH.includes(c))m[k].sa+=r[1];}));return m;}
+function agg(m,f){const o={};for(const k in m){const g=f(k);o[g]=o[g]||{s:0,a:0,p:0,sa:0};for(const x of ['s','a','p','sa'])o[g][x]+=m[k][x];}return o;}
+function val(r,i){if(!r)return null;switch(i){case 0:return r.s;case 1:return r.p;case 2:return r.a;case 3:return r.s?r.p/r.s*100:null;case 4:return r.s?r.a/r.s*100:null;case 5:return r.a?r.sa/r.a:null;}}
+function short(v){const a=Math.abs(v),s=v<0?'-':'';if(a>=1e8)return s+(a/1e8).toFixed(1)+'억';if(a>=1e4)return s+Math.round(a/1e4).toLocaleString()+'만';return s+Math.round(a).toLocaleString();}
+function fmt(i,v,full){if(v==null)return '–';if(i<3)return full?Math.round(v).toLocaleString():short(v);if(i<5)return v.toFixed(1)+'%';return v.toFixed(2)+'배';}
+
+function build(){
+const m=monthly();let rows,cols,cell;
+if(view==='m'){rows=Array.from({length:12},(_,k)=>({lab:(k+1)+'월',key:String(k+1).padStart(2,'0')}));cols=SY().map(y=>({lab:y+'년'+(y==='2026'?' (~9월)':''),y}));cell=(r,c)=>m[c.y+'-'+r.key];}
+else if(view==='q'){const q=agg(m,k=>k.slice(0,4)+'-Q'+Math.ceil(+k.slice(5)/3));rows=[1,2,3,4].map(n=>({lab:n+'분기',key:n}));cols=SY().map(y=>({lab:y+'년'+(y==='2026'?' (~9월)':''),y}));cell=(r,c)=>{const v=q[c.y+'-Q'+r.key];return (c.y==='2026'&&r.key===4)?null:v;};}
+else{const yy=agg(m,k=>k.slice(0,4));rows=SY().map(y=>({lab:y+'년'+(y==='2026'?' (~9월)':''),key:y}));cols=[{lab:'값'}];cell=r=>yy[r.key];}
+const tot=agg(m,k=>k.slice(0,4));
+return {rows,cols,cell,tot};
+}
+
+function legend(){const el=document.getElementById('legend');const C=yc();
+el.innerHTML=YEARS.map((y,i)=>`<button class="yr" data-y="${y}" aria-pressed="${sel.has(y)}"><svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="23" y2="5" stroke="${C[i]}" stroke-width="${view==='m'?2.5:8}" ${view==='m'&&DASH[i].length?`stroke-dasharray="${DASH[i].join(',')}"`:''}/></svg>${y}년${y==='2026'?' (~9월)':''}</button>`).join('')+`<span class="lghint">연도를 눌러 켜고 끌 수 있어요${sel.size<YEARS.length?' · <button class="yr" id="allY">전체 보기</button>':''}</span>`;
+el.querySelectorAll('.yr[data-y]').forEach(b=>b.onclick=()=>{const y=b.dataset.y;if(sel.has(y)){if(sel.size===1)return;sel.delete(y);}else sel.add(y);render();});
+const a=document.getElementById('allY');if(a)a.onclick=()=>{sel=new Set(YEARS);render();};}
+
+function table(i,B){
+const {rows,cols,cell,tot}=B;
+let h='<table><thead><tr><th>'+(view==='y'?'연도':view==='q'?'분기':'월')+'</th>'+cols.map(c=>`<th>${c.lab}</th>`).join('')+'</tr></thead><tbody>';
+rows.forEach(r=>{h+='<tr><td>'+r.lab+'</td>'+cols.map(c=>{const v=val(cell(r,c),i);return `<td class="${v==null?'na':v<0?'neg':''}">${fmt(i,v,true)}</td>`;}).join('')+'</tr>';});
+h+='</tbody>';
+if(view!=='y'){h+='<tfoot><tr><td>'+(i<3?'연 합계':'연간')+'</td>'+cols.map(c=>{const v=val(tot[c.y],i);return `<td class="${v==null?'na':v<0?'neg':''}">${fmt(i,v,true)}</td>`;}).join('')+'</tr></tfoot>';}
+return h+'</table>';}
+
+function render(){
+charts.forEach(c=>c.destroy());charts=[];legend();
+const B=build(),C=yc(),grid=css('--grid'),tick=css('--mute');
+const g=document.getElementById('grid');g.innerHTML='';
+MET.forEach((M,i)=>{
+const card=document.createElement('section');card.className='card';
+const isOpen=open.has(i);
+card.innerHTML=`<h2>${M.t}</h2><p class="hint">${M.h}</p><div class="chart"><canvas role="img" aria-label="${M.t} ${view==='m'?'월별':view==='q'?'분기별':'연도별'} 그래프"></canvas></div>
+<button class="tog" aria-expanded="${isOpen}" aria-controls="t${i}"><span class="ar" aria-hidden="true">▸</span><span class="lb">${isOpen?'표 접기':'표로 데이터 보기'}</span></button>
+<div class="tbl" id="t${i}" ${isOpen?'':'hidden'}>${table(i,B)}</div>`;
+g.appendChild(card);
+const btn=card.querySelector('.tog'),tb=card.querySelector('.tbl');
+btn.onclick=()=>{const o=btn.getAttribute('aria-expanded')!=='true';btn.setAttribute('aria-expanded',o);tb.hidden=!o;btn.querySelector('.lb').textContent=o?'표 접기':'표로 데이터 보기';o?open.add(i):open.delete(i);};
+let labels,sets;
+if(view==='y'){labels=B.rows.map(r=>r.lab.replace('년',''));sets=[{data:B.rows.map(r=>val(B.cell(r),i)),backgroundColor:B.rows.map(r=>C[ci(r.key)]),borderRadius:4,maxBarThickness:56}];}
+else{labels=B.rows.map(r=>r.lab);sets=B.cols.map(c=>{const yi=ci(c.y);const d=B.rows.map(r=>val(B.cell(r,c),i));return view==='m'?{label:c.y+'년',data:d,borderColor:C[yi],backgroundColor:C[yi],borderDash:DASH[yi],borderWidth:2,pointRadius:2.5,pointHoverRadius:5,tension:.25}:{label:c.y+'년',data:d,backgroundColor:C[yi],borderRadius:3,maxBarThickness:20};});}
+charts.push(new Chart(card.querySelector('canvas'),{type:view==='m'?'line':'bar',data:{labels,datasets:sets},
+options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.dataset.label?c.dataset.label+': ':'')+fmt(i,c.parsed.y,i<3)}}},
+scales:{x:{grid:{display:false},ticks:{color:tick,font:{size:11},autoSkip:false,maxRotation:0}},y:{grid:{color:grid},border:{display:false},ticks:{color:tick,font:{size:11},callback:v=>fmt(i,v)}}}}}));
+});}
+
+const chBox=document.getElementById('chs');
+CHS.forEach(c=>{const b=document.createElement('button');b.className='chip';b.textContent=c;b.setAttribute('aria-pressed',c===ch);b.onclick=()=>{ch=c;chBox.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));render();};chBox.appendChild(b);});
+document.querySelectorAll('#views button').forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll('#views button').forEach(x=>x.setAttribute('aria-pressed',x===b));render();});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+try{Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;}catch(e){}
+render();
+</script>
+</body>
+</html>
